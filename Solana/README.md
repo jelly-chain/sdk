@@ -1,92 +1,67 @@
-# Jelly x402 SDK
+# Jelly x402 — Solana SDK
 
-Official SDK for integrating with the Jelly x402 autonomous payment protocol.  
-Supports **Solana** and **BNB Chain (BSC)**.
+HTTP 402 autonomous payments on **Solana**.
 
-> The prediction markets were broken. Fragmented across chains, locked behind regional restrictions, controlled by the few. Agents were blind. Alpha died in silos. **Jelly is formless, unstoppable. Jelly sees all chains.**
+> Jelly is formless, unstoppable. Jelly sees all chains.
 
-**GitHub:** https://github.com/jelly-chain/sdk  
+**Chain:** Solana Mainnet-Beta · Devnet  
+**Native token:** SOL · SPL tokens: USDC  
+**GitHub:** https://github.com/jelly-chain/sdk/tree/main/Solana  
 **Docs:** https://jellychain.fun/docs  
-**Terminal:** https://terminal.jellychain.fun
+**API base:** `https://api.jellychain.fun`
 
 ---
 
-## Supported Chains
+## Packages
 
-| Chain | Package (TS) | Package (Python) | Chain ID |
-|-------|-------------|-----------------|----------|
-| Solana | `@jelly-chain/sdk` | `jelly-x402` | — |
-| BNB Chain | `@jelly-chain/bnb-sdk` | `jelly-x402-bnb` | 56 / 97 |
+| Language | Package | Install |
+|----------|---------|---------|
+| TypeScript / JS | `@jelly-chain/sdk` | `npm install @jelly-chain/sdk` |
+| Python | `jelly-x402` | `pip install jelly-x402` |
 
 ---
 
-## Repository Structure
+## Folder Structure
 
 ```
-sdk/
-├── README.md                  # This file
-│
-├── ts/                        # Solana TypeScript SDK
-│   ├── index.ts
-│   ├── client.ts              # X402Client
-│   ├── types.ts
-│   ├── errors.ts
-│   ├── middleware.ts          # Express middleware
-│   ├── wallet.ts              # Solana wallet utils
-│   └── package.json           # @jelly-chain/sdk
-│
-├── python/                    # Solana Python SDK
-│   └── x402_sdk/
-│       ├── __init__.py
-│       ├── client.py          # X402Client + AsyncX402Client
-│       ├── types.py
-│       ├── errors.py
-│       ├── middleware.py      # Flask middleware
-│       └── wallet.py
-│
-└── bnb/                       # BNB Chain SDK
-    ├── README.md              # BNB-specific docs
-    ├── ts/                    # BNB TypeScript SDK
-    │   ├── index.ts
-    │   ├── client.ts          # BNBX402Client + AsyncBNBX402Client
-    │   ├── types.ts
-    │   ├── errors.ts
-    │   ├── middleware.ts      # Express middleware
-    │   ├── wallet.ts          # BNBWallet (ethers.js v6)
-    │   └── package.json       # @jelly-chain/bnb-sdk
-    └── python/                # BNB Python SDK
-        ├── setup.py
-        ├── pyproject.toml
-        └── x402_bnb/
-            ├── __init__.py
-            ├── client.py      # BNBX402Client + AsyncBNBX402Client
-            ├── types.py
-            ├── errors.py
-            ├── middleware.py  # Flask + FastAPI middleware
-            └── wallet.py      # BNBWallet (web3.py)
+Solana/
+├── README.md          # This file
+├── ts/                # TypeScript SDK (@jelly-chain/sdk)
+│   ├── index.ts       # Main exports
+│   ├── client.ts      # X402Client
+│   ├── types.ts       # Type definitions
+│   ├── errors.ts      # Error classes
+│   ├── middleware.ts  # Express middleware
+│   ├── wallet.ts      # Solana wallet utilities
+│   └── package.json
+└── python/            # Python SDK (jelly-x402)
+    ├── README.md
+    ├── setup.py
+    ├── pyproject.toml
+    └── x402_sdk/
+        ├── __init__.py
+        ├── client.py      # X402Client + AsyncX402Client
+        ├── types.py
+        ├── errors.py
+        ├── middleware.py  # Flask middleware
+        └── wallet.py
 ```
 
 ---
 
-## Human Setup — Solana
+## TypeScript Setup
 
 ### Install
 
 ```bash
-# TypeScript
 npm install @jelly-chain/sdk
-
-# Python
-pip install jelly-x402
+# or
+yarn add @jelly-chain/sdk
+# or
+pnpm add @jelly-chain/sdk
 ```
 
-### Get an API Key
-
-1. Sign up at https://jellychain.fun
-2. Dashboard → API Keys → Create Key
-3. `export JELLY_API_KEY="x402_your_api_key"`
-
-### TypeScript — Client (paying agent)
+### Client (paying agent)
 
 ```typescript
 import { X402Client } from '@jelly-chain/sdk';
@@ -105,15 +80,101 @@ const client = new X402Client({
 
 const response = await client.request('https://api.example.com/premium-data');
 console.log(response.data);
+
 if (response.paymentMade) {
   console.log(`Paid ${response.paymentMade.amount} ${response.paymentMade.currency}`);
+  console.log(`Signature: ${response.paymentMade.signature}`);
 }
 ```
 
-### Python — Client (paying agent)
+### Configuration
+
+```typescript
+import { X402Client, X402Config } from '@jelly-chain/sdk';
+
+const config: X402Config = {
+  apiKey: process.env.JELLY_API_KEY!,
+  baseUrl: 'https://api.jellychain.fun',
+  network: 'mainnet-beta',      // or 'devnet'
+  maxPaymentPerRequest: 0.1,    // max SOL per request
+  commitment: 'confirmed',
+  timeout: 30000,
+  retryAttempts: 3,
+  retryDelay: 1000,
+};
+```
+
+### Express Middleware (server-side gating)
+
+```typescript
+import express from 'express';
+import { createX402Middleware } from '@jelly-chain/sdk';
+
+const app = express();
+const x402 = createX402Middleware({
+  apiKey: process.env.JELLY_API_KEY!,
+  recipient: 'YOUR_SOLANA_WALLET_ADDRESS',
+});
+
+// Require 0.001 SOL
+app.get('/api/premium', x402.requirePayment(0.001), (req, res) => {
+  res.json({ data: 'Premium content!' });
+});
+
+// Optional payment (free with benefits if paid)
+app.get('/api/data', x402.optionalPayment(0.0005), (req, res) => {
+  const payment = getPaymentInfo(req);
+  res.json({ data: 'Content', premium: !!payment });
+});
+```
+
+### Error Handling
+
+```typescript
+import {
+  X402Client,
+  InsufficientBalanceError,
+  PaymentExpiredError,
+  MaxPaymentExceededError,
+  X402Error,
+} from '@jelly-chain/sdk';
+
+try {
+  const response = await client.request('https://api.example.com/data');
+} catch (e) {
+  if (e instanceof InsufficientBalanceError) {
+    console.error(`Need ${e.required} SOL, have ${e.available}`);
+  } else if (e instanceof MaxPaymentExceededError) {
+    console.error(`Payment ${e.requested} SOL > max ${e.maximum} SOL`);
+  } else if (e instanceof PaymentExpiredError) {
+    console.error(`Expired at ${e.expiredAt.toISOString()} — retry`);
+  } else if (e instanceof X402Error) {
+    console.error(`x402 error [${e.code}]: ${e.message}`);
+  }
+}
+```
+
+---
+
+## Python Setup
+
+### Install
+
+```bash
+pip install jelly-x402
+
+# With Flask middleware
+pip install jelly-x402[flask]
+
+# With Solana signing (production)
+pip install jelly-x402[solana]
+```
+
+### Client (paying agent)
 
 ```python
 from jelly_x402 import X402Client, X402Config
+import os
 
 config = X402Config(
     network='mainnet-beta',
@@ -121,17 +182,37 @@ config = X402Config(
     max_payment_per_request=0.1,
     commitment='confirmed',
 )
+
 client = X402Client(keypair=keypair, config=config)
+
+response = client.request('https://api.example.com/premium-data')
+print(response.data)
+
+if response.payment_made:
+    print(f"Paid {response.payment_made['amount']} {response.payment_made['currency']}")
+    print(f"Signature: {response.payment_made['signature']}")
+```
+
+### Quick Start (API key only)
+
+```python
+from jelly_x402 import X402Client
+
+client = X402Client(
+    api_key=os.environ['JELLY_API_KEY'],
+    base_url='https://api.jellychain.fun',
+    max_payment_per_request=0.1,
+)
 
 response = client.request('https://api.example.com/premium-data')
 print(response.data)
 ```
 
-### Async Support (Python)
+### Async Support
 
 ```python
 from jelly_x402 import AsyncX402Client
-import asyncio
+import asyncio, os
 
 async def main():
     client = AsyncX402Client(keypair=keypair)
@@ -141,219 +222,64 @@ async def main():
 asyncio.run(main())
 ```
 
-### Express Middleware (Solana)
-
-```typescript
-import { createX402Middleware } from '@jelly-chain/sdk';
-
-const x402 = createX402Middleware({
-  apiKey: process.env.JELLY_API_KEY,
-  recipient: 'YOUR_SOLANA_WALLET_ADDRESS',
-});
-
-app.get('/api/premium', x402.requirePayment(0.001), (req, res) => {
-  res.json({ data: 'Premium content!' });
-});
-```
-
-### Flask Middleware (Solana)
+### Flask Middleware
 
 ```python
+from flask import Flask, jsonify
 from jelly_x402 import create_x402_middleware
-
-x402 = create_x402_middleware(
-    api_key=os.environ['JELLY_API_KEY'],
-    recipient='YOUR_SOLANA_WALLET_ADDRESS'
-)
-
-@app.route('/api/premium')
-@x402.require_payment(0.001)
-def premium():
-    return {'data': 'Premium content!'}
-```
-
-### Error Handling (Solana)
-
-```python
-from jelly_x402 import X402Error, InsufficientBalanceError, PaymentExpiredError
-
-try:
-    response = client.request('https://api.example.com/data')
-except InsufficientBalanceError as e:
-    print(f"Not enough SOL: need {e.required}")
-except PaymentExpiredError:
-    print("Payment window expired, retrying...")
-except X402Error as e:
-    print(f"Jelly x402 error: {e.message}")
-```
-
----
-
-## Human Setup — BNB Chain
-
-### Install
-
-```bash
-# TypeScript
-npm install @jelly-chain/bnb-sdk ethers
-
-# Python (minimal)
-pip install jelly-x402-bnb
-
-# Python (with web3 signing)
-pip install "jelly-x402-bnb[web3]"
-
-# Python (everything)
-pip install "jelly-x402-bnb[full]"
-```
-
-### TypeScript — Client (paying agent)
-
-```typescript
-import { BNBX402Client, BNBWallet } from '@jelly-chain/bnb-sdk';
-
-const wallet = BNBWallet.fromPrivateKey(process.env.BNB_PRIVATE_KEY!, {
-  network: 'mainnet',
-});
-
-const client = new BNBX402Client({
-  apiKey: process.env.JELLY_API_KEY!,
-  network: 'mainnet',
-  maxPaymentPerRequest: 0.005,   // BNB
-  gasSpeed: 'standard',
-});
-client.setWallet(wallet);
-
-const response = await client.request('https://api.example.com/premium-data');
-console.log(response.data);
-if (response.paymentMade) {
-  console.log(`Paid ${response.paymentMade.amount} ${response.paymentMade.currency}`);
-  console.log(`Tx: https://bscscan.com/tx/${response.paymentMade.txHash}`);
-}
-```
-
-### Python — Client (paying agent)
-
-```python
-from x402_bnb import BNBX402Client, BNBWallet
 import os
 
-wallet = BNBWallet.from_private_key(os.environ['BNB_PRIVATE_KEY'])
-client = BNBX402Client(
+app = Flask(__name__)
+x402 = create_x402_middleware(
     api_key=os.environ['JELLY_API_KEY'],
-    network='mainnet',
-    max_payment_per_request=0.005,
-    gas_speed='standard',
-)
-client.set_wallet(wallet)
-
-response = client.request('https://api.example.com/premium-data')
-print(response.data)
-if response.payment_made:
-    print(f"Paid {response.payment_made['amount']} {response.payment_made['currency']}")
-    print(f"Tx: https://bscscan.com/tx/{response.payment_made['tx_hash']}")
-```
-
-### Async (Python — BNB)
-
-```python
-from x402_bnb import AsyncBNBX402Client, BNBWallet
-import asyncio, os
-
-async def main():
-    wallet = BNBWallet.from_private_key(os.environ['BNB_PRIVATE_KEY'])
-    client = AsyncBNBX402Client(api_key=os.environ['JELLY_API_KEY'])
-    client.set_wallet(wallet)
-
-    response = await client.request('https://api.example.com/data')
-    print(response.data)
-
-asyncio.run(main())
-```
-
-### Express Middleware (BNB)
-
-```typescript
-import { createBNBMiddleware } from '@jelly-chain/bnb-sdk';
-
-const bnb = createBNBMiddleware({
-  apiKey: process.env.JELLY_API_KEY!,
-  recipient: '0xYourWalletAddress',
-  chainId: 56,
-});
-
-app.get('/api/premium', bnb.requirePayment(0.001), (req, res) => {
-  res.json({ data: 'Premium content!' });
-});
-
-app.get('/api/data', bnb.requirePayment(1, { currency: 'USDT' }), (req, res) => {
-  res.json({ data: 'Data behind 1 USDT paywall' });
-});
-```
-
-### Flask Middleware (BNB)
-
-```python
-from x402_bnb.middleware import create_bnb_middleware, get_payment_info
-from flask import g
-
-bnb = create_bnb_middleware(
-    api_key=os.environ['JELLY_API_KEY'],
-    recipient='0xYourWalletAddress',
+    recipient='YOUR_SOLANA_WALLET_ADDRESS',
 )
 
 @app.route('/api/premium')
-@bnb.require_payment(0.001)
+@x402.require_payment(0.001)  # 0.001 SOL
 def premium():
-    payment = get_payment_info(g)
-    return {'data': 'Premium!', 'paid_via': payment['tx_hash']}
+    return jsonify({'data': 'Premium content!'})
 ```
 
-### Error Handling (BNB)
+### Error Handling
 
 ```python
-from x402_bnb import (
-    X402Error, InsufficientBalanceError, InsufficientGasError,
-    MaxPaymentExceededError, WrongChainError, PaymentExpiredError,
+from jelly_x402 import (
+    X402Error,
+    InsufficientBalanceError,
+    PaymentExpiredError,
+    MaxPaymentExceededError,
 )
 
 try:
     response = client.request('https://api.example.com/data')
 except InsufficientBalanceError as e:
-    print(f"Need {e.required} {e.currency}, have {e.available}")
-except InsufficientGasError as e:
-    print(f"Top up BNB for gas: need ~{e.required_bnb} BNB")
-except WrongChainError as e:
-    print(f"Wrong chain: expected {e.expected_chain_id}")
+    print(f"Need {e.required} SOL, have {e.available}")
 except MaxPaymentExceededError as e:
-    print(f"Payment {e.requested} > max {e.maximum}")
+    print(f"Payment {e.requested} SOL > max {e.maximum} SOL")
+except PaymentExpiredError:
+    print("Payment window expired — retry")
 except X402Error as e:
-    print(f"Error [{e.code}]: {e.message}")
+    print(f"Jelly x402 error [{e.code}]: {e.message}")
 ```
-
-> See `bnb/README.md` for the full BNB SDK reference, including FastAPI middleware, wallet utilities, and agent skills setup.
 
 ---
 
-## Agent Setup (Skills)
+## Agent Setup (Skill)
 
-The Skills setup lets an autonomous agent load Jelly x402 as a headless skill. Place SKILL.md files in `.local/skills/`.
-
-### Solana Skill
-
-Place in `.local/skills/jelly-x402/SKILL.md`:
+Place in `.local/skills/jelly-x402/SKILL.md` for autonomous agent integration:
 
 ````markdown
 ---
 name: jelly-x402
-description: Solana x402 payment client for autonomous agents.
+description: Solana x402 payment client. Use to make payment-enabled HTTP requests settled on Solana.
 ---
 
 ## Environment Variables
 - `JELLY_API_KEY` — API key from jellychain.fun
 - `SOLANA_PRIVATE_KEY` — JSON array of secret key bytes
 
-## Quick Usage
+## TypeScript Usage
 ```javascript
 const { X402Client } = await import('@jelly-chain/sdk');
 const { Keypair } = await import('@solana/web3.js');
@@ -371,100 +297,73 @@ const client = new X402Client({
 const response = await client.request('https://api.example.com/data');
 console.log(response.data);
 ```
-````
 
-### BNB Chain Skill
-
-Place in `.local/skills/jelly-x402-bnb/SKILL.md`:
-
-````markdown
----
-name: jelly-x402-bnb
-description: BNB Chain x402 payment client for autonomous agents.
----
-
-## Environment Variables
-- `JELLY_API_KEY` — API key from jellychain.fun
-- `BNB_PRIVATE_KEY` — 32-byte hex private key
-
-## Quick Usage (TypeScript)
-```javascript
-const { BNBX402Client, BNBWallet } = await import('@jelly-chain/bnb-sdk');
-
-const wallet = BNBWallet.fromPrivateKey(process.env.BNB_PRIVATE_KEY);
-const client = new BNBX402Client({
-  apiKey: process.env.JELLY_API_KEY,
-  network: 'mainnet',
-  maxPaymentPerRequest: 0.005,
-});
-client.setWallet(wallet);
-
-const response = await client.request('https://api.example.com/data');
-console.log(response.data);
-```
-
-## Quick Usage (Python)
+## Python Usage
 ```python
-from x402_bnb import BNBX402Client, BNBWallet
+from jelly_x402 import X402Client
 import os
 
-wallet = BNBWallet.from_private_key(os.environ['BNB_PRIVATE_KEY'])
-client = BNBX402Client(api_key=os.environ['JELLY_API_KEY'], max_payment_per_request=0.005)
-client.set_wallet(wallet)
+client = X402Client(
+    api_key=os.environ['JELLY_API_KEY'],
+    max_payment_per_request=0.05,
+)
 response = client.request('https://api.example.com/data')
 print(response.data)
 ```
 
 ## Agent Safety
-1. Keep `maxPaymentPerRequest` low (0.001–0.01 BNB)
-2. Maintain ~0.01 BNB gas reserve at all times
-3. Log all txHash values for audit trail
-4. Never hardcode private keys
+1. Keep `maxPaymentPerRequest` conservative (0.01–0.1 SOL)
+2. Log all payment signatures for audit trail
+3. Never hardcode private keys — always use environment variables
 ````
 
 ---
 
 ## API Reference
 
-### Base URL
-```
-https://api.jellychain.fun/api
-```
+### Client Methods
 
-### Authentication
-```
-Authorization: Bearer x402_your_api_key
-```
+| Method | Description |
+|--------|-------------|
+| `request(url, options)` | HTTP request with automatic 402 handling |
+| `verify(request)` | Verify a payment transaction |
+| `createPaymentRequest(req)` | Create a payment requirement |
+| `getBalance(address)` | SOL + USDC balance |
+| `getTransaction(signature)` | Transaction details |
+| `getTransactionHistory(req)` | Paginated history |
+| `getAgentStats()` | Agent payment stats |
 
-### Solana Endpoints
+### HTTP Headers (Solana)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/verify` | Verify Solana payment |
-| POST | `/payment-request` | Create payment request |
-| GET | `/balance/{address}` | SOL + USDC balance |
-| GET | `/transaction/{signature}` | Transaction details |
-| GET | `/transactions/{address}` | Transaction history |
-| GET | `/agent/stats` | Agent payment stats |
+| Header | Direction | Description |
+|--------|-----------|-------------|
+| `X-402-Amount` | Response | Payment amount in SOL |
+| `X-402-Currency` | Response | `SOL` or `USDC` |
+| `X-402-Recipient` | Response | Recipient wallet address |
+| `X-402-Reference` | Both | Unique payment reference |
+| `X-402-Expires` | Response | Unix timestamp expiry |
+| `X-402-Payment-Signature` | Request | Completed transaction signature |
+| `X-402-Payment-Reference` | Request | Payment reference |
 
-### BNB Endpoints
+### Error Classes
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/bnb/verify` | Verify BNB Chain payment |
-| POST | `/bnb/payment-request` | Create BNB payment request |
-| GET | `/bnb/balance/{address}` | BNB + token balances |
-| GET | `/bnb/transaction/{txHash}` | Transaction details |
-| GET | `/bnb/transactions/{address}` | Transaction history |
-| GET | `/bnb/gas` | Current gas estimates |
-| GET | `/bnb/agent/stats` | BNB agent stats |
+| Class | Description |
+|-------|-------------|
+| `X402Error` | Base error class |
+| `InsufficientBalanceError` | Not enough SOL/USDC |
+| `PaymentExpiredError` | Payment window expired |
+| `PaymentRejectedError` | Server rejected payment |
+| `TransactionFailedError` | On-chain transaction failed |
+| `MaxPaymentExceededError` | Amount exceeds configured max |
+| `RateLimitError` | API rate limit hit |
+| `NetworkError` | Connection failure |
 
 ---
 
 ## Support
 
 - Website: https://jellychain.fun
-- Documentation: https://jellychain.fun/docs
+- Docs: https://jellychain.fun/docs
 - GitHub: https://github.com/jelly-chain/sdk
 - Twitter: https://x.com/jellyqnw
 
