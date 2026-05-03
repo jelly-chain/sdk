@@ -1,0 +1,63 @@
+{
+  "name": "wmarket-prediction-sdk",
+  "version": "2.0.0",
+  "description": "An open-source TypeScript SDK for AI agents that generate market predictions using real-world data, on-chain activity, event triggers, and keyword-based signals.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "benchmark": "tsx benchmarks/latency.bench.ts",
+    "generate-schemas": "tsx scripts/generate-schemas.ts",
+    "sync-chains": "tsx scripts/sync-chains.ts",
+    "release": "tsx scripts/release.ts"
+  },
+  "keywords": [
+    "market-prediction",
+    "crypto",
+    "defi",
+    "prediction",
+    "ai-agent",
+    "multi-chain",
+    "blockchain",
+    "ensemble",
+    "risk",
+    "telemetry"
+  ],
+  "author": "jelly-chain",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jelly-chain/wmarket-prediction-sdk"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.50.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

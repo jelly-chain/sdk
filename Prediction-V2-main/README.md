@@ -381,7 +381,7 @@ market-prediction-sdk/
 │       └── presets/
 │           ├── conservative.ts              # Conservative prediction preset
 │           ├── balanced.ts                  # Balanced prediction preset
-│           └── aggressive.ts                # Aggressive prediction preset
+│           └── aggressive.ts               # Aggressive prediction preset
 │
 ├── examples/
 │   ├── basic-prediction/
