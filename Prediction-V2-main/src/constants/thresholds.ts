@@ -1,0 +1,25 @@
+export const CONFIDENCE_THRESHOLDS = {
+  MINIMUM: 0.3,
+  LOW: 0.45,
+  MEDIUM: 0.6,
+  HIGH: 0.75,
+  VERY_HIGH: 0.9,
+} as const;
+
+export const RISK_THRESHOLDS = {
+  LOW_MAX: 0.3,
+  MEDIUM_MAX: 0.6,
+  HIGH_MAX: 0.85,
+  CRITICAL_MIN: 0.85,
+} as const;
+
+export const VOLUME_SPIKE_MULTIPLIER = 2.5;
+export const TVL_SHOCK_PERCENT = 10;
+export const BRIDGE_ANOMALY_USD = 1_000_000;
+export const SENTIMENT_OUTLIER_STDDEV = 2.0;
+
+export const DEFAULT_CACHE_TTL_MS = 300_000;
+export const DEFAULT_PREDICTION_TIMEOUT_MS = 15_000;
+export const DEFAULT_PROVIDER_TIMEOUT_MS = 8_000;
+export const DEFAULT_MAX_RETRIES = 3;
+export const DEFAULT_BACKOFF_BASE_MS = 500;
