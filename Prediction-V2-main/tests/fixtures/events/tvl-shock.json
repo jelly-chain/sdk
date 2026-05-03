@@ -1,0 +1,15 @@
+{
+  "id": "fix_evt_tvl_1",
+  "type": "tvl_change",
+  "chain": "ethereum",
+  "data": {
+    "protocol": "FixtureProtocol",
+    "previousTVL": 100000000,
+    "currentTVL": 82000000,
+    "changePercent": -18,
+    "reason": "whale_exit"
+  },
+  "timestamp": "2025-01-01T12:00:00Z",
+  "source": "llamafi",
+  "processed": false
+}

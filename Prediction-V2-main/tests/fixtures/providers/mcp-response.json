@@ -1,0 +1,14 @@
+{
+  "tokens": [
+    {
+      "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+      "symbol": "WBNB",
+      "price": 310.5,
+      "volume24h": 45000000,
+      "liquidity": 220000000,
+      "chain": "bsc"
+    }
+  ],
+  "swapEvents": [],
+  "liquidityEvents": []
+}

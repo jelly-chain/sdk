@@ -1,0 +1,19 @@
+{
+  "signal": "bearish",
+  "confidence": 0.71,
+  "riskScore": 0.55,
+  "factors": ["tvl decline", "sentiment", "bridge outflow"],
+  "explanations": [
+    "TVL dropped significantly in the last 24 hours",
+    "Sentiment is negative across news and social signals",
+    "Bridge outflows exceeded inflows"
+  ],
+  "metadata": {
+    "chain": "ethereum",
+    "sourceCount": 3,
+    "cached": false,
+    "strategy": "event-driven",
+    "triggeredBy": "event"
+  },
+  "timestamp": "2025-01-02T10:00:00Z"
+}

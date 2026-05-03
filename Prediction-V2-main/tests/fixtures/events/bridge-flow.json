@@ -1,0 +1,15 @@
+{
+  "id": "fix_evt_bridge_1",
+  "type": "bridge_activity",
+  "chain": "bsc",
+  "data": {
+    "fromChain": "ethereum",
+    "toChain": "bsc",
+    "volumeUSD": 2500000,
+    "txCount": 47,
+    "bridge": "cBridge"
+  },
+  "timestamp": "2025-01-01T11:00:00Z",
+  "source": "mcp",
+  "processed": false
+}

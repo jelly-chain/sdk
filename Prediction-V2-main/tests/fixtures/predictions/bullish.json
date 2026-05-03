@@ -1,0 +1,19 @@
+{
+  "signal": "bullish",
+  "confidence": 0.78,
+  "riskScore": 0.22,
+  "factors": ["bridge inflow", "sentiment", "volume"],
+  "explanations": [
+    "Bridge inflows increased over the selected timeframe",
+    "Sentiment is positive across social and news signals",
+    "Volume expansion supports upward momentum"
+  ],
+  "metadata": {
+    "chain": "bsc",
+    "sourceCount": 3,
+    "cached": false,
+    "strategy": "ensemble",
+    "triggeredBy": "keyword"
+  },
+  "timestamp": "2025-01-01T10:00:00Z"
+}

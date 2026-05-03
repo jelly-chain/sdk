@@ -1,0 +1,16 @@
+{
+  "id": "fix_evt_launch_1",
+  "type": "protocol_launch",
+  "chain": "bsc",
+  "contractAddress": "0xAbCd000000000000000000000000000000000001",
+  "blockNumber": 38000000,
+  "txHash": "0xdeadbeef000000000000000000000000000000000000000000000000000000001",
+  "data": {
+    "protocol": "DemoProtocol",
+    "category": "DEX",
+    "tvlAtLaunch": 1500000
+  },
+  "timestamp": "2025-01-01T10:00:00Z",
+  "source": "mcp",
+  "processed": false
+}

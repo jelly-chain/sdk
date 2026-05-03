@@ -1,0 +1,20 @@
+{
+  "protocols": [
+    {
+      "name": "PancakeSwap",
+      "tvl": 2500000000,
+      "change_1d": 3.4,
+      "change_7d": 8.1,
+      "chains": ["bsc"],
+      "category": "DEX"
+    },
+    {
+      "name": "Venus",
+      "tvl": 1200000000,
+      "change_1d": -1.2,
+      "change_7d": 2.3,
+      "chains": ["bsc"],
+      "category": "Lending"
+    }
+  ]
+}
