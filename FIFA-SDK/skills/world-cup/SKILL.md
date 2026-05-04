@@ -45,8 +45,6 @@ const toolDefs = tools.getToolDefinitions();
 | `resolve_market_question` | Parse any World Cup market question and return structured prediction context |
 | `get_fixture_context` | Full match context: form, h2h, narrative, matchup analysis |
 | `get_group_table` | Current group standings with team form |
-| `get_knockout_path` | Team's probability of reaching each tournament stage |
-| `get_team_form` | Recent results, goals scored/conceded, form rating |
 | `explain_world_cup_prediction` | Full confidence + evidence + explanation for a question |
 
 ## Handling Tool Calls
