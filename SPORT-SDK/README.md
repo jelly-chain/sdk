@@ -306,6 +306,236 @@ sports-jelly-sdk/
 
 ---
 
+## Sport & League Coverage
+
+| Sport | `Sport` value | Leagues / Competitions (`League` value) |
+|---|---|---|
+| Football / Soccer | `football` | `premier-league`, `la-liga`, `bundesliga`, `serie-a`, `ligue-1`, `champions-league`, `europa-league`, `mls`, `fifa-world-cup` |
+| Basketball | `basketball` | `nba`, `wnba`, `ncaab`, `euroleague` |
+| American Football | `american-football` | `nfl`, `ncaaf` |
+| Tennis | `tennis` | `wimbledon`, `us-open`, `australian-open`, `french-open`, `atp`, `wta` |
+| Baseball | `baseball` | `mlb` |
+| Ice Hockey | `ice-hockey` | `nhl` |
+| MMA | `mma` | `ufc` |
+| Formula 1 | `formula1` | `f1` |
+
+All `League` values are lowercase hyphenated strings. `League` also accepts `string` for custom/regional competitions not listed above.
+
+---
+
+## Supported `SportMarketType` Values
+
+| Value | Description | Sports |
+|---|---|---|
+| `MATCH_WINNER` | Single match result (1X2 / moneyline) | All sports |
+| `SERIES_WINNER` | Best-of-N series outcome | NBA, NHL, MLB playoffs |
+| `LEAGUE_WINNER` | Season competition winner | Football, NBA, NFL, MLB, NHL |
+| `DIVISION_WINNER` | Division / conference title | NFL, NBA, MLB |
+| `CONFERENCE_WINNER` | Conference championship | NFL, NBA |
+| `CHAMPIONSHIP_WINNER` | Overall tournament champion | All sports |
+| `OVER_UNDER` | Total points/goals over or under a line | All sports |
+| `SPREAD` | Point spread / Asian handicap | NFL, NBA, Football |
+| `MONEYLINE` | Two-way win market (no draw) | NBA, NFL, MLB, NHL, Tennis |
+| `PLAYER_PROP` | Individual player performance | All sports |
+| `FIRST_GOAL_SCORER` | First goal scorer | Football, NHL |
+| `BOTH_TEAMS_TO_SCORE` | Both teams net at least one goal | Football |
+| `CORRECT_SCORE` | Exact scoreline | Football |
+| `TOP_SCORER` | Golden boot / leading scorer | Football, Basketball |
+| `MVP` | Season/playoff most valuable player | NBA, NFL, MLB, NHL |
+| `QUALIFICATION` | Team advances to next round | Football, Tennis, NBA Playoffs |
+| `RELEGATION` | Team is relegated at end of season | Football |
+
+---
+
+## ID Conventions
+
+All entity IDs in this SDK are **normalized string slugs** — not numeric provider IDs. This makes them stable across provider switches.
+
+| Entity | ID format | Example |
+|---|---|---|
+| Team | `{sport}-{slug}` | `football-arsenal`, `basketball-lakers` |
+| Player | `{sport}-{teamSlug}-{playerSlug}` | `basketball-lakers-lebron-james` |
+| Fixture | `{league}-{homeSlug}-v-{awaySlug}-{YYYYMMDD}` | `premier-league-arsenal-v-chelsea-20250308` |
+| League | Hyphenated string | `premier-league`, `nba`, `f1` |
+
+Use the utility helpers to construct IDs:
+
+```ts
+import { buildTeamId, buildPlayerId, buildFixtureId } from "sports-jelly-sdk";
+
+const teamId   = buildTeamId("football", "Arsenal");         // "football-arsenal"
+const playerId = buildPlayerId("basketball", "Lakers", "LeBron James");
+const fixtureId = buildFixtureId("premier-league", "Arsenal", "Chelsea", "2025-03-08");
+```
+
+---
+
+## Caching
+
+The SDK uses an in-memory TTL cache by default. No external dependency is required.
+
+| Setting | Default | Override |
+|---|---|---|
+| TTL | 120 seconds | `CACHE_TTL_SECONDS` env var or `cache.ttlSeconds` in config |
+| Max entries | Unlimited (unbounded map) | N/A in v0.1 |
+| Eviction | Passive (check on get) | N/A |
+| Namespacing | `sport:module:key` pattern (see `CacheKeys`) | — |
+
+```ts
+const sdk = new WorldSportsSDK({
+  cache: { type: "memory", ttlSeconds: 60 },  // 60-second TTL
+});
+
+// Or override via environment variable:
+// CACHE_TTL_SECONDS=300
+```
+
+Cache keys follow the `CacheKeys` helper pattern:
+- `fixtures:{league}:{status}` — fixture lists
+- `standings:{league}:{season}` — standings tables
+- `h2h:{teamA}-vs-{teamB}:{sport}` — head-to-head records
+- `poly:snapshot:{conditionId}` — Polymarket snapshots
+- `kalshi:snapshot:{ticker}` — Kalshi snapshots
+
+A Redis cache adapter is planned for v0.4 to support multi-instance deployments.
+
+---
+
+## Provider Comparison
+
+| Provider | Sports Covered | Free Tier | Paid Tier | Sign Up |
+|---|---|---|---|---|
+| **BallDontLie** | NBA, NFL, MLB, NHL, EPL, MMA, FIFA WC | ✅ Free (rate-limited) | $9.99/mo (All Access) | [app.balldontlie.io](https://app.balldontlie.io) |
+| **API-Sports** | 30+ sports incl. Football, Basketball, F1, Tennis | ✅ 100 req/day free | €10/mo per sport | [api-sports.io](https://api-sports.io) |
+| **football-data.org** | 12 major football competitions (EPL, CL, etc.) | ✅ Free (10 req/min) | €50/mo (all comps) | [football-data.org](https://www.football-data.org/client/register) |
+| **TheSportsDB** | Football, Basketball, Baseball, Hockey, Tennis | ✅ v1 Free (no key) | $3–10/mo Patreon (v2) | [thesportsdb.com/patreon](https://www.patreon.com/thesportsdb) |
+| **Sportmonks** | Football (most complete), Cricket, F1 | ❌ Trial only | €35–200/mo | [sportmonks.com](https://www.sportmonks.com/register/) |
+| **The Odds API** | NFL, NBA, Soccer, Tennis, MLB, NHL, MMA | ✅ 500 req/month free | $10–80/mo | [the-odds-api.com](https://the-odds-api.com/#get-access) |
+
+> **Recommended minimum setup (no cost):** Set `BALLDONTLIE_API_KEY` (free) + `ODDS_API_KEY` (500 free requests/month). This gives you NBA/NFL/MLB/NHL data and live odds for all major markets.
+
+---
+
+## Complete Environment Variable Reference
+
+| Variable | Provider | Free Tier | Purpose |
+|---|---|---|---|
+| `BALLDONTLIE_API_KEY` | BallDontLie | ✅ 5 req/min | NBA, NFL, MLB, NHL, EPL, MMA, FIFA WC data |
+| `SPORTS_API_KEY` | API-Sports | ✅ 100 req/day | Multi-sport: Football, Basketball, F1, Tennis, Baseball |
+| `FOOTBALL_DATA_API_KEY` | football-data.org | ✅ 10 req/min | EPL, Bundesliga, La Liga, Serie A, Champions League (12 comps) |
+| `SPORTMONKS_API_KEY` | Sportmonks | ⚠️ Trial only | Football fixtures, lineups, xG, odds (Europe-focused) |
+| `ODDS_API_KEY` | The Odds API | ✅ 500 req/month | Live h2h odds — NFL, NBA, Soccer, Tennis, MLB, NHL, MMA |
+| `MYSPORTSFEEDS_API_KEY` | MySportsFeeds | ✅ Free for personal use | NFL, MLB, NBA, NHL historical and current season data |
+| `THESPORTSDB_PATREON_KEY` | TheSportsDB | ✅ v1 keyless; key for v2 | v2 Patreon key for live scores and full squad data |
+| `SPORTSDATA_IO_KEY` | SportsDataIO | ⚠️ 14-day trial (scrambled) | NFL, NBA, MLB, NHL, Tennis, Golf, Soccer |
+| `SPORTRADAR_API_KEY` | Sportradar | ❌ Enterprise B2B | 80+ sports — enterprise licensing only |
+| `ISPORTS_API_KEY` | iSports API | ✅ Freemium | Football (1600+ leagues), Basketball (300+ leagues), strong Asia-Pacific coverage |
+| `KALSHI_KEY_ID` | Kalshi | ❌ Auth required | Kalshi prediction market reads — Key ID portion of RSA/Ed25519 keypair |
+| `KALSHI_PRIVATE_KEY` | Kalshi | ❌ Auth required | Kalshi private key (PEM string); paired with `KALSHI_KEY_ID` |
+| `CACHE_TTL_SECONDS` | Internal | `120` | Override in-memory cache TTL (seconds) globally |
+| `SDK_DEBUG` | Internal | `""` (disabled) | Set to `"true"` to enable verbose debug logging |
+
+If no keys are set the SDK initialises normally — all provider clients return empty arrays with a `ProviderError` logged at `debug` level. The only exception is TheSportsDB v1, which works without any key.
+
+---
+
+## Relation to world-cup-jelly-sdk and Prediction-V2
+
+### world-cup-jelly-sdk
+
+`world-cup-jelly-sdk` (FIFA-SDK) covers **FIFA World Cup only** — group stages, knockout rounds, and tournament-specific markets. It is a self-contained SDK, not a dependency of this one.
+
+`sports-jelly-sdk` is the multi-sport successor: it covers the same agent-tool contract (`resolve_*, get_*, explain_*`) but across 8 sports and 16+ competitions. The two SDKs share no runtime code but follow the same architecture:
+
+```
+world-cup-jelly-sdk        sports-jelly-sdk
+──────────────────         ───────────────────────────────────
+WorldCupSDK                WorldSportsSDK
+fixtures.byGroup()         fixtures.list({ sport, league })
+standings.group()          standings.byLeague()
+resolve_market_question    resolve_sports_question
+get_fixture_context        get_match_context
+get_group_table            get_league_table
+explain_world_cup_...      explain_sports_prediction
+```
+
+Both SDKs can run simultaneously inside a single Jelly Claude session — one skill file per SDK.
+
+### Prediction-V2
+
+Prediction-V2 is the upstream quantitative model layer. It produces calibrated probability distributions for match outcomes. `sports-jelly-sdk` acts as the **data and context layer** that feeds Prediction-V2:
+
+```
+sports-jelly-sdk (context + features)
+        │
+        ▼
+Prediction-V2 (calibrated model output)
+        │
+        ▼
+Polymarket / Kalshi market readers (market-implied probabilities)
+        │
+        ▼
+AgentRuntime → Claude tool response
+```
+
+`ConfidenceEngine` in this SDK provides a lightweight local heuristic score (0–1) that can be replaced or overridden with Prediction-V2 output via `ProbabilityCalibrator.calibrate()`.
+
+---
+
+## Markets — Polymarket & Kalshi Readers
+
+Both market clients expose a **reader** for snapshot and price band access without needing to instantiate the full SDK:
+
+```ts
+import { PolymarketReader, KalshiReader } from "sports-jelly-sdk";
+
+// Polymarket — find and snapshot a market
+const poly = new PolymarketReader(polymarketClient, cache);
+const snap = await poly.findForQuestion("Will Arsenal win the Premier League?");
+console.log(snap?.impliedProbability); // e.g. 0.34
+
+// Kalshi — list all open sports markets
+const kalshi = new KalshiReader(kalshiClient, cache);
+const markets = await kalshi.sportMarkets();
+const top = kalshi.topByVolume(markets, 5);
+
+// Detect cross-platform arbitrage
+const arb = kalshi.detectArbitrage(0.62, 0.55, 0.03);
+console.log(arb); // { isArbitrage: true, divergence: 0.07, direction: "kalshi-higher" }
+```
+
+| Reader | Class | Key Methods |
+|---|---|---|
+| `PolymarketReader` | `src/markets/polymarket/reader.ts` | `snapshot()`, `search()`, `findForQuestion()`, `priceBand()`, `topByVolume()` |
+| `KalshiReader` | `src/markets/kalshi/reader.ts` | `snapshot()`, `sportMarkets()`, `priceBand()`, `detectArbitrage()`, `topByVolume()` |
+
+---
+
+## Compliance
+
+- This SDK is for **informational and research purposes only**.
+- It does not execute trades, place bets, or submit orders on any platform.
+- All data is sourced from third-party APIs — accuracy depends on those providers.
+- Check local regulations before using prediction market data for financial decisions.
+- See [`docs/compliance.md`](./docs/compliance.md) for full disclaimer.
+
+---
+
+## Roadmap
+
+| Version | Milestone |
+|---|---|
+| `0.1.0` | Core architecture: 6 providers, 8 sports, 4 Claude tools, Polymarket + Kalshi readers, backtesting framework |
+| `0.2.0` | Live provider hydration — real data flowing through all namespace modules |
+| `0.3.0` | Prediction-V2 integration — calibrated model output replaces heuristic confidence |
+| `0.4.0` | Redis cache support, multi-instance deployments |
+| `0.5.0` | WebSocket live match events, replay streaming |
+| `1.0.0` | Stable public API, full provider coverage, production-grade error budgets |
+
+See [`docs/roadmap.md`](./docs/roadmap.md) for full detail.
+
+---
+
 ## Running Tests
 
 ```bash
@@ -313,7 +543,7 @@ npm install
 npm test
 ```
 
-Expected: 4 test files, 33+ passing assertions, 0 TypeScript errors.
+Expected: 4 test files, 46 passing assertions, 0 TypeScript errors.
 
 ## Type Checking
 
@@ -326,3 +556,4 @@ npm run typecheck
 ## License
 
 MIT — see [LICENSE](./LICENSE)
+`
