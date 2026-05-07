@@ -200,6 +200,25 @@ export interface AgentSportsContext {
   generatedAt: string;
 }
 
+// ─── Namespaces (SDK wiring) ───────────────────────────────────────────────
+
+import type { AlertEngine } from './live/alert-engine.js';
+import type { ResearchSessionManager } from './research/session.js';
+
+export interface BankrollNamespace {
+  kelly: unknown;
+  fixedUnits: unknown;
+  portfolioRisk: unknown;
+}
+
+export interface LiveNamespace {
+  alertEngine: AlertEngine;
+}
+
+export interface ResearchNamespace {
+  session: ResearchSessionManager;
+}
+
 // ─── SDK config ───────────────────────────────────────────────────────────────
 
 export interface WorldSportsSDKConfig {

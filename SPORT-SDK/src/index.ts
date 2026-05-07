@@ -7,6 +7,7 @@ export type {
   Sport, League, MarketPlatform, SportMarketType, MatchStatus, MatchStage,
   Team, Player, Venue, Fixture, Standing, BracketNode, MatchEvent, FormRecord,
   AgentSportsContext, WorldSportsSDKConfig,
+  BankrollNamespace, LiveNamespace, ResearchNamespace,
 } from './types.js';
 
 export {
@@ -32,6 +33,12 @@ export type { ConfidenceResult } from './prediction/confidence-engine.js';
 export type { PredictionFeatures } from './prediction/feature-builder.js';
 export { ProbabilityCalibrator } from './prediction/probability-calibrator.js';
 export { ExplanationBuilder } from './prediction/explanation-builder.js';
+
+export { AlertEngine } from './live/alert-engine.js';
+export type { AlertEvent, AlertType, OddsSpikeInput, ScoreChangeInput } from './live/alert-engine.js';
+
+export { ResearchSessionManager } from './research/session.js';
+export type { ResearchSessionState, EvidenceItem, StartResearchSessionInput } from './research/session.js';
 
 export { BallDontLieClient } from './providers/balldontlie/client.js';
 export { ApiSportsClient } from './providers/api-sports/client.js';

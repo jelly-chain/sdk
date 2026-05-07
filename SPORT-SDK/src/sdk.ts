@@ -46,6 +46,10 @@ import { ResponseSchema } from './agents/response-schema.js';
 import { BacktestRunner } from './backtesting/backtest-runner.js';
 import { HistoricalLoader } from './backtesting/historical-loader.js';
 
+import { kellyStake, fixedUnitStake, analyzePortfolioRisk } from './bankroll/index.js';
+import { AlertEngine } from './live/alert-engine.js';
+import { ResearchSessionManager } from './research/session.js';
+
 /** Fully assembled sports namespace — everything about raw sport data. */
 export interface SportsNamespace {
   fixtures: FixturesModule;
@@ -93,6 +97,20 @@ export interface MarketsNamespace {
   common: MarketCommon;
 }
 
+export interface BankrollNamespace {
+  kelly: typeof kellyStake extends (...args: any[]) => any ? { kellyStake: typeof kellyStake } : never;
+  fixedUnits: { fixedUnitStake: typeof fixedUnitStake };
+  portfolioRisk: { analyzePortfolioRisk: typeof analyzePortfolioRisk };
+}
+
+export interface LiveNamespace {
+  alertEngine: AlertEngine;
+}
+
+export interface ResearchNamespace {
+  session: ResearchSessionManager;
+}
+
 /** Top-level entry point for sports-jelly-sdk. */
 export class WorldSportsSDK {
   public readonly sports: SportsNamespace;
@@ -103,6 +121,10 @@ export class WorldSportsSDK {
   public readonly tools: ToolAdapter;
   public readonly backtesting: BacktestRunner;
   public readonly historicalLoader: HistoricalLoader;
+
+  public readonly bankroll: BankrollNamespace;
+  public readonly live: LiveNamespace;
+  public readonly research: ResearchNamespace;
 
   /** Utility singletons exposed for advanced usage. */
   public readonly claude: ClaudeFormat;
@@ -141,13 +163,19 @@ export class WorldSportsSDK {
     const availability = new PlayerAvailability(this.sports);
     const leagueContext = new LeagueContext(this.sports);
 
-    // NarrativeEngine only needs upsets + injuries — typed via NarrativeEngineDeps (no cast)
     const narrativeDeps: NarrativeEngineDeps = { upsets, injuries };
     const narratives = new NarrativeEngine(this.sports, narrativeDeps);
-    const intelligence: IntelligenceNamespace = {
-      form, matchup, injuries, squadStrength, schedulePressure, upsets, narratives, availability, leagueContext,
+    this.intelligence = {
+      form,
+      matchup,
+      injuries,
+      squadStrength,
+      schedulePressure,
+      upsets,
+      narratives,
+      availability,
+      leagueContext,
     };
-    this.intelligence = intelligence;
 
     // Prediction namespace
     const parser = new MarketQuestionParser();
@@ -174,13 +202,21 @@ export class WorldSportsSDK {
 
     // Agent layer
     const agentConfig = this.config.get('agent');
-    const runtime = new AgentRuntime(this.sports, this.intelligence, this.prediction, this.markets, agentConfig);
-    this.agents = runtime;
-    this.tools = new ToolAdapter(runtime);
+    this.agents = new AgentRuntime(this.sports, this.intelligence, this.prediction, this.markets, agentConfig);
+    this.tools = new ToolAdapter(this.agents);
 
     // Backtesting
     this.historicalLoader = new HistoricalLoader(this.cache);
     this.backtesting = new BacktestRunner(this.sports, this.prediction);
+
+    // New namespaces
+    this.bankroll = {
+      kelly: { kellyStake },
+      fixedUnits: { fixedUnitStake },
+      portfolioRisk: { analyzePortfolioRisk },
+    };
+    this.live = { alertEngine: new AlertEngine() };
+    this.research = { session: new ResearchSessionManager() };
 
     // Utilities
     this.claude = new ClaudeFormat();
