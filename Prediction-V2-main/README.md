@@ -1,18 +1,23 @@
 # WMarket Prediction SDK v2
 
-An open-source TypeScript SDK for AI agents that generate market predictions using real-world data, on-chain activity, event triggers, and keyword-based signals. WMarket Prediction SDK v2 is built for multi-chain, event-aware prediction workflows with a modular architecture that supports extensibility, observability, replayability, and production-grade automation.
+An open-source TypeScript SDK for AI agents that generate market predictions using real-world data, on-chain activity, prediction market orderbooks, event triggers, and keyword-based signals. WMarket Prediction SDK v2 is built for multi-chain, event-aware prediction workflows with a modular architecture that supports extensibility, observability, replayability, and production-grade automation.
 
 ## Overview
 
-WMarket Prediction SDK v2 helps developers build intelligent systems that react to market conditions in real time. It combines external APIs, blockchain event monitoring, trigger engines, ensemble modeling, risk analysis, caching, metrics, plugin support, and agent-facing utilities into a unified prediction framework.
+WMarket Prediction SDK v2 helps developers build intelligent systems that react to market conditions in real time. It combines external APIs, blockchain event monitoring, prediction market data (Polymarket, Kalshi, predict.fun), DEX and DeFi analytics, trigger engines, ensemble modeling, risk analysis, caching, metrics, plugin support, and agent-facing utilities into a unified prediction framework.
 
-This version expands the SDK from a simple prediction tool into a full prediction infrastructure layer. It is designed not only to generate signals, but also to support routing, replay, auditing, testing, backtesting, and custom strategy development across multiple chains and data sources.
+This version expands the SDK from a simple prediction tool into a full prediction infrastructure layer. It is designed not only to generate signals, but also to support routing, replay, auditing, testing, backtesting, and custom strategy development across multiple chains, data sources, and prediction market venues.
 
 ## Core Capabilities
 
 - Real-time data ingestion from off-chain APIs, on-chain events, and market data providers.
+- **Prediction market integration:** live orderbook data and implied probabilities from Polymarket, Kalshi, and predict.fun with cross-market divergence detection.
+- **DeFi analytics integration:** TVL, yield, and protocol health signals via DeFiLlama, Aave, Uniswap, and GMX.
+- **NFT market signals:** collection floor price momentum, volume trends, and whale accumulation via OpenSea.
+- **Cross-exchange price data:** spot prices, funding rates, and open interest from OKX, Binance, and Hyperliquid.
+- **On-chain oracle data:** tamper-resistant price feeds from Chainlink across all major EVM chains.
 - Event-driven prediction workflows for launches, TVL changes, bridge flows, liquidity shifts, and other protocol activity.
-- Multi-chain support across BNB Chain, Ethereum, and a broad range of EVM-compatible networks.
+- Multi-chain support across BNB Chain, Ethereum, Base, Arbitrum, Polygon, Solana, and all major EVM-compatible networks.
 - Keyword-based and condition-based triggers for automated prediction execution.
 - Ensemble modeling that combines multiple strategies into a single prediction output.
 - Integrated risk assessment for confidence scoring and downside evaluation.
@@ -26,7 +31,9 @@ This version expands the SDK from a simple prediction tool into a full predictio
 
 Version 2 introduces a more complete prediction pipeline built for serious market automation. Instead of treating prediction as a single function call, v2 organizes the system around ingestion, normalization, triggering, scoring, aggregation, risk evaluation, policy checks, output routing, and performance monitoring.
 
-It also introduces infrastructure that makes the SDK more production-ready. Features such as schema validation, replay tooling, audit logs, plugin runtime support, contract tests, and benchmark tooling make it better suited for teams building long-lived agent systems and market intelligence products.
+v2 also adds a comprehensive **prediction market data layer** that feeds live Polymarket, Kalshi, and predict.fun implied probabilities directly into the signal pipeline, enabling cross-venue divergence arbitrage and news-driven mispricing detection as first-class features.
+
+Additional infrastructure makes the SDK more production-ready: schema validation, replay tooling, audit logs, plugin runtime support, contract tests, and benchmark tooling make it better suited for teams building long-lived agent systems and market intelligence products.
 
 ## Input Structure
 
@@ -553,6 +560,11 @@ Storage adapters support caching, metric persistence, checkpoints, and recovery 
 - Multi-chain analytics platforms that need a unified prediction and risk framework.
 - Plugin-based prediction products that support custom strategies and provider adapters.
 - Backtesting and replay systems for validating prediction quality against historical data.
+- **Prediction market arb scanners** that detect Polymarket vs Kalshi vs predict.fun price gaps.
+- **News-driven trading bots** that map breaking headlines to live prediction market mispricings.
+- **DeFi yield signal systems** that use TVL momentum and funding rate data as prediction inputs.
+- **NFT sentiment trackers** that correlate collection floor movements with prediction market prices.
+- **Whale activity monitors** that cross-reference large on-chain moves with prediction market positions.
 
 ## Installation
 
@@ -640,15 +652,122 @@ This testing model is important for prediction systems that depend on many movin
 - **Replayable:** workflows can be inspected, rerun, and validated over historical inputs.
 - **Production-oriented:** caching, validation, retries, checkpoints, and policies are built into the design.
 
+## Provider Adapters (v2.x)
+
+The SDK ships with built-in adapters for all major data sources. Community-contributed adapters can be registered via the plugin system.
+
+### Price & Market Data
+| Adapter | Source | Key Required |
+|---------|--------|-------------|
+| `coingecko` | CoinGecko REST API | Optional (`COINGECKO_API_KEY`) |
+| `chainlink` | On-chain price feeds (all EVM) | None (RPC only) |
+| `binance` | Binance spot + futures market data | Optional (public endpoints free) |
+| `okx` | OKX spot, perps, and DEX | `OKX_API_KEY` |
+| `hyperliquid` | Hyperliquid mark prices + funding | None (public REST) |
+
+### DeFi & On-Chain
+| Adapter | Source | Key Required |
+|---------|--------|-------------|
+| `defillama` | TVL, yields, stablecoins, DEX volume | None (free public API) |
+| `aave` | Supply/borrow rates, health factors | None (read-only, RPC) |
+| `uniswap` | Pool prices, tick data, TWAP oracles | None (RPC) |
+| `gmx` | Open interest, funding, mark price | None (REST) |
+| `etherscan` | EVM on-chain tx, balances, logs | `ETHERSCAN_API_KEY` |
+| `birdeye` | Solana + multi-chain token analytics | `BIRDEYE_API_KEY` |
+| `helius` | Solana RPC, DAS, webhooks | `HELIUS_API_KEY` |
+
+### Prediction Markets
+| Adapter | Source | Key Required |
+|---------|--------|-------------|
+| `polymarket` | Polymarket CLOB (Polygon/USDC) | `POLYMARKET_API_KEY` |
+| `kalshi` | Kalshi REST (US fiat binary markets) | `KALSHI_API_KEY` |
+| `predict-fun` | predict.fun CLOB v2 (BNB/USDT) | `PREDICT_API_KEY` |
+
+### NFT & Social
+| Adapter | Source | Key Required |
+|---------|--------|-------------|
+| `opensea` | NFT floor prices, sales, listings | `OPENSEA_API_KEY` |
+| `dexscreener` | New pairs, volume surges | None (free public API) |
+
+### Existing (from v2.0)
+| Adapter | Source |
+|---------|--------|
+| `llamafi` | LLamaFi API client |
+| `mcp` | BNB Chain MCP server |
+| `news-client` | News/social feed client |
+| `sentiment-client` | External sentiment APIs |
+| `macro-client` | Macro/market data APIs |
+
+---
+
+## New Strategies (v2.x)
+
+Two new prediction strategies added alongside the existing five:
+
+### `orderbook-pressure-strategy`
+Reads prediction market orderbook depth (via Polymarket, Kalshi, or predict.fun adapters), computes bid/ask imbalance, and generates a directional pressure signal. High ask depth → bearish pressure; high bid depth → bullish pressure.
+
+### `cross-venue-divergence-strategy`
+Aggregates YES prices across all three prediction market venues for the same event, computes spread and standard deviation, and flags high-divergence markets as mispricing opportunities. Returns `arbitrage_opportunity` signal with net spread (after fees).
+
+---
+
+## Prediction Market Quick Start
+
+```typescript
+import { WMarketPredictor } from 'wmarket-prediction-sdk';
+
+const predictor = new WMarketPredictor({
+  chains: ['bsc', 'ethereum', 'polygon'],
+  providers: {
+    polymarket: { apiKey: process.env.POLYMARKET_API_KEY },
+    kalshi:     { apiKey: process.env.KALSHI_API_KEY, secret: process.env.KALSHI_API_SECRET },
+    predictFun: { apiKey: process.env.PREDICT_API_KEY },
+    defillama:  {},    // no key required
+    chainlink:  { rpcUrl: process.env.ETH_RPC_URL },
+  },
+  strategies: ['momentum', 'sentiment', 'cross-venue-divergence', 'orderbook-pressure'],
+  enableRiskAssessment: true,
+  enableMetrics: true,
+  enableCache: true,
+});
+
+// Score a market keyword signal with full prediction market context
+const result = await predictor.predict({
+  keyword: 'Fed rate cut November 2024',
+  context: { chain: 'ethereum', timeframe: '4h' },
+  platformPrices: {
+    polymarket: 0.62,
+    kalshi:     0.55,
+    predictFun: 0.59,
+  },
+});
+
+console.log(result.signal);        // 'bullish'
+console.log(result.confidence);    // 0.74
+console.log(result.divergence);    // { spread: 0.07, arbitrage: true, bestBuy: 'kalshi' }
+console.log(result.jellyScore);    // 68 (moderate — half position sizing)
+
+// Scan for cross-venue arb opportunities
+const arb = await predictor.scanDivergence({
+  query: 'BTC ETF',
+  minSpread: 0.03,   // 3% minimum after fees
+});
+// Returns all event markets where venues disagree > 3% net of fees
+```
+
 ## Roadmap
 
 - Add more provider adapters for non-EVM and cross-domain market data.
-- Expand backtesting and historical scenario tooling.
-- Introduce strategy weighting based on historical performance.
+- Expand backtesting and historical scenario tooling with prediction market replay.
+- Introduce strategy weighting based on historical prediction performance vs market resolution.
 - Add webhook and queue-based output delivery.
 - Extend policy controls for safer automated execution.
 - Add hosted dashboards for metrics, audits, and replay inspection.
 - Support community plugins and provider packages.
+- **Real-time divergence alerts:** push notifications when cross-venue spread exceeds threshold.
+- **Resolution tracking:** automatically close arb legs when a prediction market resolves.
+- **Calibration engine:** auto-adjust Jelly Score thresholds based on historical accuracy per market type.
 
 ## Repository
 
